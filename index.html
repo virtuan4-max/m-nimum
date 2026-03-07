@@ -80,13 +80,13 @@
         .browser-tabs {
           display: flex;
           align-items: flex-end;
-          padding: 8px 16px 0;
+          padding: 6px 16px 0;
           gap: 4px;
           background: var(--bg);
           border-bottom: 1px solid var(--border);
           flex-shrink: 0;
           overflow: hidden;
-          min-height: 50px;
+          min-height: 38px;
           box-sizing: border-box;
         }
 
@@ -94,7 +94,7 @@
           display: flex;
           align-items: center;
           gap: 8px;
-          padding: 8px 8px 8px 12px;
+          padding: 6px 8px 6px 12px;
           flex: 1 1 160px;
           min-width: 40px;
           max-width: 200px;
@@ -212,7 +212,7 @@
           display: flex;
           align-items: center;
           gap: 8px;
-          padding: 12px 16px;
+          padding: 9px 16px;
           background: var(--bg);
           border-bottom: 1px solid var(--border);
           flex-shrink: 0;
@@ -263,6 +263,7 @@
           color: var(--text-primary);
           font-size: 1.6rem;
           font-family: var(--font);
+          caret-color: transparent;
           outline: none;
           transition: 0.2s;
           color-scheme: dark;
@@ -337,7 +338,6 @@
           inset: 0;
           z-index: 9999;
           background: rgba(0, 0, 0, 0.88);
-          -webkit-
           animation: fadeIn 0.4s ease;
         }
         .message-content {
@@ -375,6 +375,17 @@
           margin: 0 auto 20px;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes caretBlink { 0%,100%{opacity:1} 50%{opacity:0} }
+        .fake-caret {
+          position: absolute;
+          width: 1.5px;
+          background: var(--text-primary);
+          top: 50%;
+          transform: translateY(-50%);
+          pointer-events: none;
+          display: none;
+          animation: caretBlink 1s step-end infinite;
+        }
         .tab-spinner {
           width: 15px;
           height: 15px;
@@ -416,9 +427,15 @@
           animation: fadeIn 0.2s ease;
         }
         .wisp-settings-modal.hidden { display: none; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: rgba(255,255,255,0.03); border-radius: 8px; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 8px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+        * { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.15) rgba(255,255,255,0.03); }
+
         .proxy-wisp-card {
-          background: var(--card-bg);
-          width: 420px;
+          background: #1a1a1a;
+          width: 520px;
           max-width: 92vw;
           max-height: 82vh;
           border-radius: 8px;
@@ -690,7 +707,7 @@
         <div class="wisp-settings-modal hidden" id="wisp-settings-modal">
             <div class="proxy-wisp-card">
                 <div class="proxy-wisp-header">
-                    <h2><span style="font-size:1.4rem;line-height:1">◈</span>Proxy Settings</h2>
+                    <h2><span style="font-size:1.4rem;line-height:1">⨀</span>Proxy Settings</h2>
                     <button class="close-btn" id="close-wisp-modal"><i class="fa-solid fa-xmark"></i></button>
                 </div>
                 <div class="settings-content" id="settings-tab-servers">
@@ -801,7 +818,7 @@
       align-items: center;
       gap: 14px;
       width: 100%;
-      padding: 12px 16px;
+      padding: 9px 16px;
       border-radius: 8px;
       background: var(--input-bg);
       border: 1px solid var(--border);
@@ -838,6 +855,7 @@
       color: var(--text-primary);
       font-size: 1.6rem;
       font-family: var(--font);
+      caret-color: transparent;
       color-scheme: dark;
     }
     .search-box input::placeholder { color: var(--text-dim); opacity: 0.5; }
@@ -1067,7 +1085,6 @@
   </div>
   <div class="content">
     <div class="hero-block">
-      <div class="gl-logo">◈</div>
       <h1 class="gl-title">m!nimum</h1>
     </div>
     <form class="search-wrap" id="searchForm">
@@ -1211,6 +1228,39 @@
       renderShortcuts();
     };
   </script>
+    <style>
+      .search-box { position: relative; }
+      @keyframes ntCaretBlink { 0%,100%{opacity:1} 50%{opacity:0} }
+      .fake-caret { position:absolute; width:1.5px; background:var(--accent); top:50%; transform:translateY(-50%); pointer-events:none; display:none; animation:ntCaretBlink 1s step-end infinite; height:0.9rem; }
+    </style>
+    <script>
+      (function(){
+        const input = document.getElementById('searchInput');
+        if (!input) return;
+        const caret = document.createElement('div');
+        caret.className = 'fake-caret';
+        input.parentElement.appendChild(caret);
+        const cvs = document.createElement('canvas');
+        function update() {
+          if (document.activeElement !== input) { caret.style.display='none'; return; }
+          const val = input.value.substring(0, input.selectionStart ?? input.value.length);
+          const cs = getComputedStyle(input);
+          const ctx = cvs.getContext('2d');
+          ctx.font = cs.font;
+          const tw = ctx.measureText(val).width;
+          const boxLeft = input.parentElement.getBoundingClientRect().left;
+          const inputLeft = input.getBoundingClientRect().left;
+          const caretX = inputLeft - boxLeft + tw;
+          const boxWidth = input.parentElement.getBoundingClientRect().width;
+          if (caretX >= boxWidth - 4) { caret.style.display='none'; return; }
+          caret.style.left = caretX + 'px';
+          caret.style.display = 'block';
+        }
+        ['focus','input','keyup','click','select'].forEach(ev => input.addEventListener(ev, update));
+        input.addEventListener('keydown', () => requestAnimationFrame(update));
+        input.addEventListener('blur', () => { caret.style.display='none'; });
+      })();
+    </script>
 </body>
 </html></template>
 
@@ -1462,6 +1512,28 @@
             return sharedConnection;
         }
 
+        function initFakeCaret(input) {
+            const wrapper = input.parentElement;
+            const caret = document.createElement('div');
+            caret.className = 'fake-caret';
+            caret.style.height = '0.9rem';
+            wrapper.appendChild(caret);
+            const cvs = document.createElement('canvas');
+            function update() {
+                if (document.activeElement !== input) { caret.style.display = 'none'; return; }
+                const val = input.value.substring(0, input.selectionStart ?? input.value.length);
+                const cs = getComputedStyle(input);
+                const ctx = cvs.getContext('2d');
+                ctx.font = cs.font;
+                const tw = ctx.measureText(val).width;
+                caret.style.left = ((parseFloat(cs.paddingLeft) || 0) + tw) + 'px';
+                caret.style.display = 'block';
+            }
+            ['focus','input','keyup','click','select'].forEach(ev => input.addEventListener(ev, update));
+            input.addEventListener('keydown', () => requestAnimationFrame(update));
+            input.addEventListener('blur', () => { caret.style.display = 'none'; });
+        }
+
         async function initializeBrowser() {
             const root = document.getElementById("proxy-app");
             root.innerHTML = `
@@ -1504,6 +1576,7 @@
                 addrBar: document.getElementById('address-bar'),
                 skipBtn: document.getElementById('skip-btn')
             };
+            initFakeCaret(elements.addrBar);
 
             elements.backBtn.onclick = () => {
                 const tab = getActiveTab();
