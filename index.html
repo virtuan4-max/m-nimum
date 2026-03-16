@@ -1323,7 +1323,7 @@
 
         async function fetchWispServers() {
             try {
-                const res = await fetch("https://cdn.jsdelivr.net/gh/virtuan4-max/ghostlinkhub@main/proxy/wisps.html");
+                const res = await fetch(" ");
                 const text = await res.text();
                 const match = text.match(/const\s+WISP_SERVERS\s*=\s*(\[[\s\S]*?\]);/);
                 if (match) {
@@ -1333,7 +1333,7 @@
                 console.warn("Failed to fetch wisp server list:", e);
             }
             if (!WISP_SERVERS.length) {
-                WISP_SERVERS = [{ name: "Wisp 1", url: "wss://i-ready.math.bostoncareercounselor.com/wisp/" }];
+                WISP_SERVERS = [{ name: "Wisp 1", url: "wss://wisp.rhw.one/wisp/" }];
             }
             if (!DEFAULT_WISP) DEFAULT_WISP = WISP_SERVERS[0].url;
             if (!localStorage.getItem("proxServer")) {
